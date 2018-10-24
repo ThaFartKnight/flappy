@@ -14,14 +14,15 @@ public class Game extends Canvas implements Runnable{
 	private LinkedList<Bird> birds = new LinkedList<Bird>();
 	private LinkedList<Pipe> topPipes = new LinkedList<>(); //max 2 pipes
 	private LinkedList<Pipe> bottomPipes = new LinkedList<>();//max 2 pipes
+	private final int totalBirds = 100; 
 	
 	//Game options
 	public static final int velX = 5;
-	public static final int spacing = 250;
+	public static final int spacing = 200;
 	
 	public Game() {
 		new Window(this);
-		birds.add(new Bird((Math.round(Window.width / 4)), (Window.height - Bird.height) / 2, this));
+		birds.add(new Bird(this));
 		newPipes();
 		running = true;
 		start();
@@ -94,7 +95,7 @@ public class Game extends Canvas implements Runnable{
 		if(allDead) {
 			newPipes();
 			birds.clear();
-			birds.add(new Bird((Math.round(Window.width / 4)), (Window.height - Bird.height) / 2, this));
+			birds.add(new Bird(this));
 		}
 		for(int i = 0; i < topPipes.size(); i++) {
 			topPipes.get(i).tick();
@@ -111,32 +112,11 @@ public class Game extends Canvas implements Runnable{
 			topPipes.set(1, new Pipe((int)Math.round(Window.width * 0.75) + topPipes.getFirst().x, 0, top, this));
 			bottomPipes.set(1, new Pipe((int)Math.round(Window.width * 0.75) + topPipes.getFirst().x, bottom, Window.height - bottom, this));
 		}
-		for(int i = 0; i < birds.size(); i++) {
-			Bird b = birds.get(i);
-			if(topPipes.getFirst().isActive()) {
-				//first pipe
-				Pipe p = topPipes.getFirst();
-				if(b.isAlive() && p.x < b.x) {
-					b.increaseScore();
-					if(i +1 == birds.size()){
-						topPipes.getFirst().setActive(false);
-					}
-				}
-			}else {
-				//second pipe
-				Pipe p = topPipes.getLast();
-				if(b.isAlive() && p.x < b.x && p.isActive()) {
-					b.increaseScore();
-					if(i +1 == birds.size()){
-						topPipes.getLast().setActive(false);
-					}
-				}
-			}
-			
-		}
 		birds.forEach( b -> {
 			b.tick();
+			b.think(topPipes);
 		});
+		collision();
 	}
 	
 	//TODO draw score -- not necessary for ML
@@ -160,7 +140,7 @@ public class Game extends Canvas implements Runnable{
 			}
 			
 		});
-		//In a forloop so that the pipes move row by row at a time
+		//In a for loop so that the pipes move row by row at a time
 		for(int i = 0; i < topPipes.size(); i++) {
 			topPipes.get(i).render(g);
 			bottomPipes.get(i).render(g);
@@ -171,11 +151,25 @@ public class Game extends Canvas implements Runnable{
 	}
 	
 	//Temp func for manual control of bird 
-	//Not nessesary when machine learning in play
-	public Bird getBird() {
-		return birds.getFirst();
-	}
+	//Not necessary when machine learning in play
 	public LinkedList<Bird> getBirds(){
 		return birds;
+	}
+	
+	private void collision() {
+		for(Bird b : birds) {
+			for(Pipe pipe : topPipes) {
+				if(b.getBounds().intersects(pipe.getBounds())) {
+					b.killBird();
+					break;
+				}
+			}
+			for(Pipe pipe : bottomPipes) {
+				if(b.getBounds().intersects(pipe.getBounds())) {
+					b.killBird();
+					break;
+				}
+			}
+		}
 	}
 }

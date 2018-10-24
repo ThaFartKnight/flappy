@@ -11,7 +11,7 @@ public class Input extends KeyAdapter{
 	}
 	public void keyPressed(KeyEvent e) {
 		if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-			game.getBird().jump();
+			//game.getBird().jump();
 		}
 	}
 }
